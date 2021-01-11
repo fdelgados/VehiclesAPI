@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/cars")
+@ApiResponses(value = {
+    @ApiResponse(code=400, message = "This is a bad request, please follow the API documentation for the proper request format."),
+    @ApiResponse(code=500, message = "The server is down. Please make sure that the Vehicle REST API is running.")
+})
 class CarController {
 
     private final CarService carService;
@@ -44,6 +50,9 @@ class CarController {
      * @return list of vehicles
      */
     @GetMapping
+    @ApiResponses(value = {
+        @ApiResponse(code=200, message = "OK.")
+    })
     Resources<Resource<Car>> list() {
         List<Resource<Car>> resources = carService.list().stream().map(assembler::toResource)
                 .collect(Collectors.toList());
@@ -57,6 +66,10 @@ class CarController {
      * @return all information for the requested vehicle
      */
     @GetMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(code=200, message = "OK."),
+        @ApiResponse(code=404, message = "Car not found.")
+    })
     Resource<Car> get(@PathVariable Long id) {
         return assembler.toResource(carService.findById(id));
     }
@@ -68,6 +81,9 @@ class CarController {
      * @throws URISyntaxException if the request contains invalid fields or syntax
      */
     @PostMapping
+    @ApiResponses(value = {
+        @ApiResponse(code=201, message = "Car created successfully.")
+    })
     ResponseEntity<?> post(@Valid @RequestBody Car car) throws URISyntaxException {
         Resource<Car> resource = assembler.toResource(carService.save(car));
         return ResponseEntity.created(new URI(resource.getId().expand().getHref())).body(resource);
@@ -80,6 +96,10 @@ class CarController {
      * @return response that the vehicle was updated in the system
      */
     @PutMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(code=200, message = "Car data edited successfully."),
+        @ApiResponse(code=404, message = "Car not found.")
+    })
     ResponseEntity<?> put(@PathVariable Long id, @Valid @RequestBody Car car) {
         car.setId(id);
         Resource<Car> resource = assembler.toResource(carService.save(car));
@@ -92,6 +112,10 @@ class CarController {
      * @return response that the related vehicle is no longer in the system
      */
     @DeleteMapping("/{id}")
+    @ApiResponses(value = {
+        @ApiResponse(code=204, message = "Car deleted successfully."),
+        @ApiResponse(code=404, message = "Car not found.")
+    })
     ResponseEntity<?> delete(@PathVariable Long id) {
         carService.delete(id);
         return ResponseEntity.noContent().build();
