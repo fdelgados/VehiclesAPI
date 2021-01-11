@@ -42,6 +42,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
 public class CarControllerTest {
+    private static final Long CAR_ID = 1L;
+    private static final String CAR_MODEL = "Impala";
+    private static final String CAR_BODY = "sedan";
 
     @Autowired
     private MockMvc mvc;
@@ -64,7 +67,7 @@ public class CarControllerTest {
     @Before
     public void setup() {
         Car car = getCar();
-        car.setId(1L);
+        car.setId(CAR_ID);
         given(carService.save(any())).willReturn(car);
         given(carService.findById(any())).willReturn(car);
         given(carService.list()).willReturn(Collections.singletonList(car));
@@ -91,12 +94,15 @@ public class CarControllerTest {
      */
     @Test
     public void listCars() throws Exception {
-        /**
-         * TODO: Add a test to check that the `get` method works by calling
-         *   the whole list of vehicles. This should utilize the car from `getCar()`
-         *   below (the vehicle will be the first in the list).
-         */
-
+        mvc.perform(get(new URI("/cars"))
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(jsonPath("$._embedded").exists())
+                .andExpect(jsonPath("$._embedded.carList", hasSize(1)))
+                .andExpect(jsonPath("$._embedded.carList[0].id", is(CAR_ID.intValue())))
+                .andExpect(jsonPath("$._embedded.carList[0].details.model", is(CAR_MODEL)))
+                .andExpect(jsonPath("$._embedded.carList[0].details.body", is(CAR_BODY)))
+                .andExpect(status().isOk());
     }
 
     /**
@@ -105,10 +111,14 @@ public class CarControllerTest {
      */
     @Test
     public void findCar() throws Exception {
-        /**
-         * TODO: Add a test to check that the `get` method works by calling
-         *   a vehicle by ID. This should utilize the car from `getCar()` below.
-         */
+        mvc.perform(get(new URI("/cars/" + CAR_ID))
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(jsonPath("$").exists())
+                .andExpect(jsonPath("$.id", is(CAR_ID.intValue())))
+                .andExpect(jsonPath("$.details.model", is(CAR_MODEL)))
+                .andExpect(jsonPath("$.details.body", is(CAR_BODY)))
+                .andExpect(status().isOk());
     }
 
     /**
@@ -117,11 +127,9 @@ public class CarControllerTest {
      */
     @Test
     public void deleteCar() throws Exception {
-        /**
-         * TODO: Add a test to check whether a vehicle is appropriately deleted
-         *   when the `delete` method is called from the Car Controller. This
-         *   should utilize the car from `getCar()` below.
-         */
+        mvc.perform(delete(new URI("/cars/" + CAR_ID))
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isNoContent());
     }
 
     /**
@@ -134,10 +142,10 @@ public class CarControllerTest {
         Details details = new Details();
         Manufacturer manufacturer = new Manufacturer(101, "Chevrolet");
         details.setManufacturer(manufacturer);
-        details.setModel("Impala");
+        details.setModel(CAR_MODEL);
         details.setMileage(32280);
         details.setExternalColor("white");
-        details.setBody("sedan");
+        details.setBody(CAR_BODY);
         details.setEngine("3.6L V6");
         details.setFuelType("Gasoline");
         details.setModelYear(2018);
